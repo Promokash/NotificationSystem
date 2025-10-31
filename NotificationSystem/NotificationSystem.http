@@ -1,6 +1,12 @@
 @NotificationSystem_HostAddress = http://localhost:5138
 
-GET {{NotificationSystem_HostAddress}}/weatherforecast/
-Accept: application/json
+POST {{NotificationSystem_HostAddress}}/api/orders
+Content-Type: application/json
 
+{
+  "GoodName": "Pizza",
+  "Preferences": {
+    "notificationChannelTypes": [1, 2]
+  }
+}
 ###

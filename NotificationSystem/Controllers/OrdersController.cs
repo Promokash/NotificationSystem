@@ -1,35 +1,41 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using NotificationSystem.Enums;
-using NotificationSystem.Services;
+using NotificationSystem.Commands;
 
 namespace NotificationSystem.Controllers;
 
+[ApiController]
+[Route("api/[controller]")]
 public class OrdersController(
-    OrderService orderService,
-    ILogger logger) : Controller
+    ICommandHandler<CreateOrderCommand, CreateOrderResult> commandHandler,
+    ILogger<OrdersController> logger) : Controller
 {
     [Produces("application/json")]
     [Consumes("application/json")]
-    //[ProducesResponseType(typeof(ApiError), 500)]
-    //[ProducesResponseType(typeof(ApiError), 401)]
-    //[ProducesResponseType(typeof(ApiError), 403)]
-    //[ProducesResponseType(typeof(), 200)]
-    [HttpPost("/api/orders")]
-    public async Task<IActionResult> SendOrder(
-    //[Required][FromBody] string[] goods,
-    )
+    [HttpPost]
+    public async Task<IActionResult> CreateOrder([FromBody] CreateOrderCommand command, CancellationToken ct = default)
     {
         try
         {
-            await orderService.CreateOrderAsync("Milk", new Models.UserPreferences { NotificationChannelTypes = [NotificationChannelTypeEnum.None] });
-            return Ok();
+            var result = await commandHandler.HandleAsync(command, ct);
 
-            //return BadRequest(result.AsT1);
+            return result.Success
+                ? Ok(result)
+                : BadRequest(result);
         }
         catch (Exception ex)
         {
-            logger.LogError(ex.Message);
-            return Json(ex);
+            logger.LogError(ex, "Error creating order");
+            return StatusCode(500, new { error = ex.Message });
         }
     }
+
+    //[HttpGet("{id}")]
+    //public IActionResult GetOrder(int id)
+    //{
+    //    var order = orderRepository.GetById(id);
+    //    if (order == null)
+    //        return NotFound();
+    //    return Ok(order);
+    //}
 }
+
